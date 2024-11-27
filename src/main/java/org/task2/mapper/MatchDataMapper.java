@@ -7,8 +7,6 @@ import org.task2.model.MatchDataDTO;
 
 @Mapper(componentModel = "cdi")
 public interface MatchDataMapper {
-    MatchDataMapper INSTANCE = Mappers.getMapper(MatchDataMapper.class);
-
     MatchDataJpa toEntity(MatchDataDTO dto);
 
     MatchDataDTO toDTO(MatchDataJpa entity);

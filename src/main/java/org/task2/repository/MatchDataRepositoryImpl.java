@@ -2,6 +2,8 @@ package org.task2.repository;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.task2.model.MatchDataDTO;
 
 import javax.sql.DataSource;
@@ -13,6 +15,7 @@ import java.util.Map;
 
 @ApplicationScoped
 public class MatchDataRepositoryImpl implements MatchDataRepository {
+    private static final Logger logger = LoggerFactory.getLogger(MatchDataRepositoryImpl.class);
 
     private final DataSource dataSource;
 
@@ -37,16 +40,16 @@ public class MatchDataRepositoryImpl implements MatchDataRepository {
                 pstmt.setTimestamp(5, Timestamp.valueOf(dto.getDateInsert()));
                 pstmt.setString(6, dto.getRunId());
                 pstmt.setInt(7, dto.getSequenceNumber());
-                pstmt.setString(8, dto.getEventType()); // Set eventType
+                pstmt.setString(8, dto.getEventType());
                 pstmt.addBatch();
             }
 
             pstmt.executeBatch();
         } catch (SQLException e) {
-            throw e; // Rethrow to allow higher layers to handle if necessary
+            logger.error("Unexpected exception in insertMatchData: {}", e.getMessage(), e);
+            throw e;
         }
     }
-
 
     @Override
     public Map<String, LocalDateTime> getTimestamps(String runId) {
@@ -69,8 +72,7 @@ public class MatchDataRepositoryImpl implements MatchDataRepository {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
-            // Consider using a logger instead of printStackTrace
+            logger.error("Unexpected exception in getTimestamps for runId {}: {}", runId, e.getMessage(), e);
         }
         return result;
     }

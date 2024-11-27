@@ -10,9 +10,8 @@ public class MatchDataDTO {
     private LocalDateTime dateInsert;
     private String runId;
     private String eventType; // 'A' or 'B'
-    private int sequenceNumber; // New Field
+    private int sequenceNumber;
 
-    // Getters and Setters
 
     public String getMatchId() {
         return matchId;

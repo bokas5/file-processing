@@ -23,7 +23,7 @@ public class FileProcessingService {
 
     private static final int BATCH_SIZE = 1000;
     private static final int THREAD_COUNT = Runtime.getRuntime().availableProcessors();
-    private static int runCounter = 0; // Static counter for runId
+    private static int runCounter = 0;
 
     @Inject
     MatchDataRepository matchDataRepository;
@@ -104,9 +104,6 @@ public class FileProcessingService {
                 // Assign Event Type based on SPECIFIERS
                 char eventType = (matchData.getSpecifiers() != null && !matchData.getSpecifiers().isEmpty()) ? 'A' : 'B';
                 matchData.setEventType(String.valueOf(eventType));
-
-                // Assign Sequence Number
-                int sequenceNumber = 1; // Initialize, will set later
 
                 // Group by MATCH_ID and Event Type
                 if (eventType == 'A') {
@@ -224,14 +221,14 @@ public class FileProcessingService {
             List<Future<Void>> futures = bExecutor.invokeAll(bTasks);
             for (Future<Void> future : futures) {
                 try {
-                    future.get(); // Will throw exception if the task failed
+                    future.get();
                 } catch (ExecutionException ee) {
                     logger.error("Task execution failed: {}", ee.getCause().getMessage(), ee.getCause());
                 }
             }
         } catch (InterruptedException ie) {
             logger.error("B Executor interrupted: {}", ie.getMessage(), ie);
-            Thread.currentThread().interrupt(); // Restore interrupt status
+            Thread.currentThread().interrupt();
         } finally {
             bExecutor.shutdown();
             try {
@@ -246,31 +243,6 @@ public class FileProcessingService {
         }
     }
 
-
-
-    /**
-     * Processes a batch of MatchDataDTO records, ensuring correct ordering based on sequenceNumber.
-     *
-     * @param batch The list of MatchDataDTO records to process.
-     * @throws Exception if processing fails.
-     */
-    private void processBatch(List<MatchDataDTO> batch) throws Exception {
-        for (MatchDataDTO dto : batch) {
-            MatchIdSequence seq = matchIdSequenceMap.get(dto.getMatchId());
-            if (seq != null) {
-                // Wait for the turn based on sequenceNumber
-                seq.waitForTurn(dto.getSequenceNumber());
-
-                // Write to output (database)
-                matchDataRepository.insertMatchData(Collections.singletonList(dto));
-                logger.info("Inserted MatchDataDTO: {}", dto);
-
-                // Signal the next sequence
-                seq.signalNext();
-            }
-        }
-    }
-
     /**
      * Retrieves the next run ID in a thread-safe manner.
      *
@@ -278,13 +250,6 @@ public class FileProcessingService {
      */
     private synchronized int getNextRunId() {
         return ++runCounter;
-    }
-
-    /**
-     * Resets the run counter. Useful for testing to start run IDs from 1.
-     */
-    public synchronized void resetRunCounter() {
-        runCounter = 0;
     }
 
     /**

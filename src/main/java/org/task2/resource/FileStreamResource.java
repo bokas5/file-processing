@@ -4,6 +4,10 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.task2.services.FileProcessingService;
 
 import java.time.Duration;
@@ -20,8 +24,16 @@ public class FileStreamResource {
     FileProcessingService fileProcessingService;
 
     @POST
+    @Operation(summary = "Process a file", description = "Processes the specified file for match data insertion.")
+    @APIResponses(value = {
+            @APIResponse(responseCode = "200", description = "File processed successfully"),
+            @APIResponse(responseCode = "400", description = "File name must be provided"),
+            @APIResponse(responseCode = "500", description = "Error while processing file")
+    })
     @Path("/process")
-    public Response processFile(@QueryParam("fileName") String fileName) {
+    public Response processFile(
+            @Parameter(description = "Name of the file to process", required = true)
+            @QueryParam("fileName") String fileName) {
         if (fileName == null || fileName.isEmpty()) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity("File name must be provided")
@@ -38,8 +50,16 @@ public class FileStreamResource {
     }
 
     @GET
+    @Operation(summary = "Retrieve Timestamps", description = "Retrieves the minimum and maximum insertion timestamps for a given run ID.")
+    @APIResponses(value = {
+            @APIResponse(responseCode = "200", description = "Timestamps retrieved successfully"),
+            @APIResponse(responseCode = "400", description = "Bad Request - Run ID not provided or invalid"),
+            @APIResponse(responseCode = "404", description = "Not Found - No timestamps found for the given run ID")
+    })
     @Path("/timestamps")
-    public Response getTimestamps(@QueryParam("runId") String runId) {
+    public Response getTimestamps(
+            @Parameter(description = "Run ID to retrieve timestamps for", required = true)
+            @QueryParam("runId") String runId) {
         if (runId == null || runId.isEmpty()) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity("Run ID must be provided")
